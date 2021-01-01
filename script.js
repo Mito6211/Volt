@@ -24,6 +24,7 @@ const client = new Discord.Client();
 // enter ID of the discord channel you want the polls to occur
 const POLL_CHANNEL_ID = "794356261168087090";
 const MS_IN_A_DAY = 1000 * 60 * 60 * 24;
+const MS_IN_15_MINUTES = 1000 * 60 * 15;
 
 client.on("message", (msg) => {
     if (msg.content === "!verify") {
@@ -33,9 +34,10 @@ client.on("message", (msg) => {
             .then((message) => {
                 message.react("👍");
                 message.react("👎");
+
                 const newPoll = new Poll({
                     id: message.id,
-                    expiration: new Date().getTime() + MS_IN_A_DAY,
+                    expiration: new Date().getTime(),
                     upvotes: 0,
                     downvotes: 0,
                 });
@@ -51,5 +53,18 @@ client.on("message", (msg) => {
             });
     }
 });
+
+setInterval(() => {
+    (async () => {
+        const data = await Poll.find();
+        data.forEach((pollEntry) => {
+            if (new Date().getTime() >= pollEntry.expiration) {
+                console.log(
+                    "Poll with ID " + pollEntry.id + " is past expiration"
+                );
+            }
+        });
+    })();
+}, MS_IN_15_MINUTES);
 
 client.login(process.env.TOKEN);
